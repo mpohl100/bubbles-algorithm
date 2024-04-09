@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
   double starting_value = 0.0;
   size_t num_parents = 2;
   size_t num_children = 20;
+  size_t num_mutations = 100;
   bool help = false;
   auto cli =
       Opt(number_generations,
@@ -31,6 +32,8 @@ int main(int argc, char **argv) {
           "The number of parents per generation.") |
       Opt(num_children, "num_children")["-c"]["--num-children"](
           "The number of children per generation.") |
+      Opt(num_mutations, "num_mutations")["-m"]["--num-mutations"](
+          "The number of mutations per generation.") |
       Help(help);
 
   auto result = cli.parse(Args(argc, argv));
@@ -43,12 +46,13 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  auto evolParams = evol::EvolutionOptions{};
+  auto evolParams = evol::adjust::AdjustEvolutionOptions{};
   evolParams.num_generations = number_generations;
   evolParams.log_level = log_level;
   evolParams.num_parents = num_parents;
   evolParams.num_children = num_children;
   evolParams.out = &std::cout;
+  evolParams.max_num_mutations = 100;
 
   if (random_seed == 0) {
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -60,8 +64,8 @@ int main(int argc, char **argv) {
   auto rng = evol::Rng{random_seed};
 
   auto starting_chrom = math::XCoordinate{starting_value};
-  const auto evolResult =
-      evol::evolution(starting_chrom, math::MathFunction{}, evolParams, rng);
+  const auto evolResult = evol::adjust::evolution(
+      starting_chrom, math::MathFunctionAdjust{}, evolParams, rng);
 
   std::cout << '\n';
   std::cout << "winning x: " << evolResult.winner.x()

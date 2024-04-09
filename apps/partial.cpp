@@ -10,8 +10,10 @@ int main(int argc, char **argv) {
   using namespace clara;
 
   int number_generations = 100;
-  size_t random_seed = 0;
   size_t log_level = 0;
+  double min_magnitude = 0.0;
+  double max_magnitude = 1.0;
+  size_t random_seed = 0;
   double starting_value = 0.0;
   size_t num_parents = 2;
   size_t num_children = 20;
@@ -20,6 +22,10 @@ int main(int argc, char **argv) {
       Opt(number_generations,
           "number_generations")["-n"]["--number-generations"](
           "The number of generations to calculate") |
+      Opt(min_magnitude, "min_magnitude")["-b"]["--min"](
+          "The min magnitude of the x choordinates to examine") |
+      Opt(max_magnitude, "max_magnitude")["-t"]["--max"](
+          "The max magnitude of the x choordinates to examine") |
       Opt(random_seed, "random_seed")["-r"]["--rand"](
           "The random seed of the evolution algorithm, a positive integer") |
       Opt(log_level, "log_level")["-l"]["--log"](
@@ -43,12 +49,14 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  auto evolParams = evol::EvolutionOptions{};
+  auto evolParams = evol::partial::PartialEvolutionOptions{};
   evolParams.num_generations = number_generations;
   evolParams.log_level = log_level;
   evolParams.num_parents = num_parents;
   evolParams.num_children = num_children;
   evolParams.out = &std::cout;
+  evolParams.min_magnitude = min_magnitude;
+  evolParams.max_magnitude = max_magnitude;
 
   if (random_seed == 0) {
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -58,10 +66,9 @@ int main(int argc, char **argv) {
     random_seed = static_cast<size_t>(timestamp);
   }
   auto rng = evol::Rng{random_seed};
-
   auto starting_chrom = math::XCoordinate{starting_value};
-  const auto evolResult =
-      evol::evolution(starting_chrom, math::MathFunction{}, evolParams, rng);
+  const auto evolResult = evol::partial::evolution(
+      starting_chrom, math::MathFunctionPartial{}, evolParams, rng);
 
   std::cout << '\n';
   std::cout << "winning x: " << evolResult.winner.x()
